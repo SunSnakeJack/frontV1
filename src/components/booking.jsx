@@ -21,6 +21,7 @@ function Booking() {
   const location = useLocation();
   const { room } = location.state || {};
   const today = new Date().toISOString().split('T')[0];
+  const [days, setDays] = useState(0);
 
   const [isActive, setIsActive] = useState(false); // จัดการสถานะของเมนู
 
@@ -120,28 +121,29 @@ function Booking() {
     if (inputs.checkIn && inputs.checkOut && room) {
       const checkInDate = new Date(inputs.checkIn);
       const checkOutDate = new Date(inputs.checkOut);
-      const days = Math.max((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24), 0);
-
-      if (days > 0) {
-        const price = room.price * days;
-        setTotalPrice(price);
-        console.log(price)
-
-        if (days >= 2) {
-          const price = room.price * days;
-          const discountRate = room.type === 'single room' ? 0.05 : room.type === 'double room' ? 0.10 : 0;
-          const discounted = price * (1 - discountRate);
-          setDiscountedPrice("discounted", discounted);
-        } else {
-          setDiscountedPrice(null);
+      const calculatedDays = Math.max((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24), 0);
+      setDays(calculatedDays);
+  
+      if (room.price) {
+        const pricePerNight = parseFloat(room.price.replace(/,/g, '')); // แปลงราคาห้องเป็นตัวเลข
+        const totalPrice = pricePerNight * calculatedDays; // คำนวณราคาห้องรวมกับจำนวนวัน
+        let discount = 0;
+  
+        // ตรวจสอบจำนวนวันเพื่อกำหนดส่วนลด
+        if (calculatedDays >= 2) {
+          discount = totalPrice * 0.05; // ส่วนลด 5%
         }
+  
+        setTotalPrice(totalPrice - discount); // คำนวณ Total Price
+        setDiscountedPrice(discount); // ตั้งค่า Discounted Price
       } else {
-        setTotalPrice(room.price);
+        setTotalPrice(0);
         setDiscountedPrice(null);
       }
     }
-  }, [inputs, room]);
-
+  }, [inputs.checkIn, inputs.checkOut, room]);
+  
+  
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -368,19 +370,17 @@ function Booking() {
           </div>
         </div>
         {room && (
-          <div className='reservation-summary'>
-            <h4><strong>Reservation Summary</strong></h4>
-            <p>Room Name: <strong>{room.name}</strong></p>
-            <p>Price per Night: <strong>THB {room.price}</strong></p>
-            <p>Days: <strong>{Math.max((new Date(inputs.checkOut) - new Date(inputs.checkIn)) / (1000 * 60 * 60 * 24), 1)} days</strong></p>
-            <p><strong>Stay 2 Nights Extra Save 5%</strong></p>
-            <p><strong>Total Price:</strong> {typeof totalPrice === 'number' ? totalPrice.toFixed(2) : '0.00'} THB</p>
-            {discountedPrice !== null && (
-              <p><strong>Discounted Price:</strong> {typeof discountedPrice === 'number' ? discountedPrice.toFixed(2) : '0.00'} THB</p>
-            )}
-            <button type='submit' className='confirm-booking-btn' onClick={handleSubmit}>Confirm Booking</button>
-          </div>
-        )}
+  <div className='reservation-summary'>
+    <h4><strong>Reservation Summary</strong></h4>
+    <p>Room Name: <strong>{room.name}</strong></p>
+    <p>Price per Night: <strong>THB {room.price}</strong></p>
+    <p>Days: <strong>{days} days</strong></p>
+    <p><strong>Stay 2 Nights Extra Save 5%</strong></p>
+    <p><strong>Total Price:</strong> {typeof totalPrice === 'number' ? totalPrice.toFixed(2) : '0.00'} THB</p>
+    <p><strong>Discounted Price:</strong> {typeof discountedPrice === 'number' ? discountedPrice.toFixed(2) : '0.00'} THB</p>
+    <button type='submit' className='confirm-booking-btn' onClick={handleSubmit}>Confirm Booking</button>
+  </div>
+)}
       </div>
 
       <footer>

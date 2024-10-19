@@ -3,12 +3,6 @@ import '../assets/css/fontawesome.css';
 import '../assets/css/styles.css';
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'swiper/swiper-bundle.css';
-import properties_01 from '../assets/images/property-01.jpg'
-import properties_02 from '../assets/images/property-02.jpg'
-import properties_03 from '../assets/images/property-03.jpg'
-import properties_04 from '../assets/images/property-04.jpg'
-import properties_05 from '../assets/images/property-05.jpg'
-import properties_06 from '../assets/images/property-06.jpg'
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../assets/images/logo.jpg'
 import { Avatar } from '@mui/material';
@@ -23,7 +17,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { Dropdown, DropdownButton } from 'react-bootstrap';
 
-
 const SearchRoom = () => {
   const [filter, setFilter] = useState('*');
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,16 +27,7 @@ const SearchRoom = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('token') !== null);
   const [filterQuantity, setFilterQuantity] = useState('*');
-
-
-  const rooms = [
-    { id: 1, type: 'single room', image: properties_01, name: 'DELUXE VILLA', price: '3500', quantity: '2' },
-    { id: 2, type: 'single room', image: properties_02, name: 'PREMIER DULUXE VILLA', price: '4000', quantity: '2' },
-    { id: 3, type: 'single room', image: properties_03, name: 'POOL VILLA', price: '5000', quantity: '3' },
-    { id: 4, type: 'double room', image: properties_04, name: 'DELUXE VILLA', price: '6000', quantity: '4' },
-    { id: 5, type: 'double room', image: properties_05, name: 'PREMIER DELUXE VILLA', price: '6500', quantity: '4' },
-    { id: 6, type: 'double room', image: properties_06, name: 'POOL VILLA', price: '7500', quantity: '6' }
-  ];
+  const [rooms, setRooms] = useState([]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -95,40 +79,64 @@ const SearchRoom = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
 
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", "Bearer " + token);
+      const myHeaders = new Headers();
+      myHeaders.append("Authorization", "Bearer " + token);
 
-    const requestOptions = {
-      method: "GET",
-      headers: myHeaders,
-      redirect: "follow"
+      const requestOptions = {
+        method: "GET",
+        headers: myHeaders,
+        redirect: "follow"
+      };
+
+      try {
+        // Fetch profile data
+        const profileResponse = await fetch("http://localhost:3333/profile", requestOptions);
+        const profileResult = await profileResponse.json();
+        if (profileResult.status === 'ok') {
+          setUser(profileResult.user);
+        } else if (profileResult.status === 'forbidden') {
+          await MySwal.fire({
+            html: <i>{profileResult.message}</i>,
+            icon: 'error'
+          });
+          navigate('/');
+          return; // Exit early if forbidden
+        }
+
+        // Fetch booking details
+        const roomResponse = await fetch("http://localhost:3333/rooms", requestOptions);
+        const roomResult = await roomResponse.json();
+        if (roomResult.status === 'ok') {
+          setRooms(roomResult.rooms);
+        } else if (roomResult.status === 'forbidden') {
+          await MySwal.fire({
+            html: <i>{roomResult.message}</i>,
+            icon: 'error'
+          });
+          navigate('/');
+          return; // Exit early if forbidden
+        }
+
+        setIsLoaded(true); // Set loaded state to true when both requests are done
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Handle error as needed
+      }
     };
 
-    fetch("http://localhost:3333/profile", requestOptions)
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === 'ok') {
-          setUser(result.user);
-          setIsLoaded(false);
-        } else if (result.status === 'forbidden') {
-          MySwal.fire({
-            html: <i>{result.message}</i>,
-            icon: 'error'
-          }).then((value) => {
-            navigate('/');
-          });
-        }
-        console.log(result);
-      })
-      .catch((error) => console.error(error));
+    fetchData();
   }, [MySwal, navigate]);
 
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  } else {
   return (
     <div>
 
@@ -237,35 +245,34 @@ const SearchRoom = () => {
 
           <div className="row properties-box">
             {rooms
-              .filter(room => {
-                const roomPrice = parseInt(room.price.replace(/,/g, '')); // เอา ',' ออกจากราคา
-                const roomQuantity = parseInt(room.quantity);
-                const { min: priceMin, max: priceMax } = getMinMax(searchTerm);
-                const { min: quantityMin, max: quantityMax } = getQuantityMinMax(filterQuantity);
+              // .filter(room => {
+              //   const roomPrice = parseInt(room.roomPrice.replace(/,/g, '')); // เอา ',' ออกจากราคา
+              //   const roomQuantity = parseInt(room.roomArea);
+              //   const { min: priceMin, max: priceMax } = getMinMax(searchTerm);
+              //   const { min: quantityMin, max: quantityMax } = getQuantityMinMax(filterQuantity);
               
-                return (filter === '*' || room.type === filter) &&
-                  (roomPrice >= priceMin && roomPrice <= priceMax) &&
-                  (roomQuantity >= quantityMin && roomQuantity <= quantityMax);
-              })
+              //   return (filter === '*' || room.type === filter) &&
+              //     (roomPrice >= priceMin && roomPrice <= priceMax) &&
+              //     (roomQuantity >= quantityMin && roomQuantity <= quantityMax);
+              // })
               
               .map(room => (
-                <div key={room.id} className={`col-lg-4 col-md-6 align-self-center mb-30 properties-items ${room.type}`}>
+                <div key={room.roomId} className={`col-lg-4 col-md-6 align-self-center mb-30 properties-items ${room.roomType}`}>
                   <div className="item">
-                    <Link to={`/RoomDetails1/${room.id}`} onClick={() => handleRoomDetails(room.id)}>
-                      <img src={room.image} alt={room.name} />
+                    <Link to={`/RoomDetails1/${room.roomId}`} onClick={() => handleRoomDetails(room.roomId)}>
+                    <img src={`data:image/jpeg;base64,${room.roomImage}`} alt={room.roomName} />
                     </Link>
                     <span className="category">
-                      {room.type === 'single room' ? <HotelIcon style={{ fontSize: 30 }}></HotelIcon> : <BedIcon style={{ fontSize: 30 }}></BedIcon>}
+                      {room.roomType === 'single room' ? <HotelIcon style={{ fontSize: 30 }}></HotelIcon> : <BedIcon style={{ fontSize: 30 }}></BedIcon>}
                     </span>
-                    <h6>THB {room.price}</h6>
-                    <h4><Link to={`/RoomDetails1/${room.id}`} onClick={() => handleRoomDetails(room.id)}>{room.name}</Link></h4>
+                    <h6>THB {room.roomPrice}</h6>
+                    <h4><Link to={`/RoomDetails1/${room.roomId}`} onClick={() => handleRoomDetails(room.roomId)}>{room.roomName}</Link></h4>
                     <ul>
-                      <li>Number of rooms: <span>{room.NumberOfRooms}</span></li>
-                      <li>Quantity: <span>{room.quantity}</span></li>
+                      <li>Quantity: <span>{room.roomArea}</span></li>
                       <li>Stay 2 Nights Extra Save 5%</li>
                     </ul>
                     <div className="main-button">
-                      <Link to={`/RoomDetails1/${room.id}`} onClick={() => handleRoomDetails(room.id)}>Room Details</Link>
+                      <Link to={`/RoomDetails1/${room.roomId}`} onClick={() => handleRoomDetails(room.roomId)}>Room Details</Link>
                     </div>
                   </div>
                 </div>
@@ -283,7 +290,7 @@ const SearchRoom = () => {
         </div>
       </footer>
     </div>
-  );
+  );}
 };
 
 export default SearchRoom;

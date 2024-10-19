@@ -90,13 +90,14 @@ const RoomDetails = () => {
         const fetchRoomDetails = async () => {
             // Dummy data, replace with actual fetch
             const rooms = [
-                { id: 1, type: <HotelIcon style={{ fontSize: 30 }}></HotelIcon>, image: 'property-01.jpg', name: 'DELUXE VILLA', price: '3,500', area: '15x15' },
-                { id: 2, type: <HotelIcon style={{ fontSize: 30 }}></HotelIcon>, image: 'property-02.jpg', name: 'PREMIER DULUXE VILLA', price: '4,000', area: '15x17' },
-                { id: 3, type: <HotelIcon style={{ fontSize: 30 }}></HotelIcon>, image: 'property-03.jpg', name: 'POOL VILLA', price: '5,000', area: '15x20' },
-                { id: 4, type: <BedIcon style={{ fontSize: 30 }}></BedIcon>, image: 'property-04.jpg', name: 'DELUXE VILLA', price: '6,000', area: '20x20' },
-                { id: 5, type: <BedIcon style={{ fontSize: 30 }}></BedIcon>, image: 'property-05.jpg', name: 'PREMIER DELUXE VILLA', price: '6,500', area: '25x25' },
-                { id: 6, type: <BedIcon style={{ fontSize: 30 }}></BedIcon>, image: 'property-06.jpg', name: 'POOL VILLA', price: '7,500', area: '30x30' }
-            ];
+                { id: 1, type: <HotelIcon style={{ fontSize: 30 }} />, image: 'property-01.jpg', name: 'DELUXE VILLA', price: parseFloat('3,500'.replace(/,/g, '')), area: '15x15' },
+                { id: 2, type: <HotelIcon style={{ fontSize: 30 }} />, image: 'property-02.jpg', name: 'PREMIER DULUXE VILLA', price: parseFloat('4,000'.replace(/,/g, '')), area: '15x17' },
+                { id: 3, type: <HotelIcon style={{ fontSize: 30 }} />, image: 'property-03.jpg', name: 'POOL VILLA', price: parseFloat('5,000'.replace(/,/g, '')), area: '15x20' },
+                { id: 4, type: <BedIcon style={{ fontSize: 30 }} />, image: 'property-04.jpg', name: 'DELUXE VILLA', price: parseFloat('6,000'.replace(/,/g, '')), area: '20x20' },
+                { id: 5, type: <BedIcon style={{ fontSize: 30 }} />, image: 'property-05.jpg', name: 'PREMIER DELUXE VILLA', price: parseFloat('6,500'.replace(/,/g, '')), area: '25x25' },
+                { id: 6, type: <BedIcon style={{ fontSize: 30 }} />, image: 'property-06.jpg', name: 'POOL VILLA', price: parseFloat('7,500'.replace(/,/g, '')), area: '30x30' }
+              ];
+              
             const roomDetails = rooms.find(room => room.id === parseInt(roomId));
             setRoom(roomDetails);
         };
